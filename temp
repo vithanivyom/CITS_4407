@@ -1,0 +1,41 @@
+#/bin/bash
+
+awk -F '\t' 'NR==1 {
+    for (i=1; i<=NF; i++) {
+        gsub(/[^a-zA-Z0-9]/, "_", $i)  # Replace spaces and special characters with underscores
+        if ($i == "Entity" || $i == "Code" || $i == "Year" || $i == "Cantril_ladder_score" || $i == "_GDP_per_capita__PPP__constant_2017_international____") {
+            column[i] = $i
+            printf "%s\t", $i  # Print only the selected headers
+        }
+    }
+    printf "\n"
+}
+
+NR > 1 {
+    if ($2 != "" && $3 >= 2011 && $3 <= 2021) {
+        for (i in column) {
+            printf "%s\t", $(i)  # Print the value corresponding to the header
+        }
+        printf "\n"
+    }
+}' gdp-vs-happiness.tsv | sort -k1,1  | head -n 6
+
+awk -F '\t' 'NR==1 {
+    for (i=1; i<=NF; i++) {
+        gsub(/[^a-zA-Z0-9]/, "_", $i)  # Replace spaces and special characters with underscores
+        if ($i == "Entity" || $i == "Code" || $i == "Year" || $i == "Cantril_ladder_score" || $i == "Life_expectancy___Sex__all___Age__at_birth___Variant__estimates") {
+            column[i] = $i
+            printf "%s\t", $i  # Print only the selected headers
+        }
+    }
+    printf "\n"
+}
+
+NR > 1 {
+    if ($2 != "" && $3 >= 2011 && $3 <= 2021) {
+        for (i in column) {
+            printf "%s\t", $(i)  # Print the value corresponding to the header
+        }
+        printf "\n"
+    }
+}' life-satisfaction-vs-life-expectancy.tsv | sort -k1,1  |head -n 6
