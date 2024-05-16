@@ -3,7 +3,7 @@
 awk -F '\t' 'NR==1 {
     for (i=1; i<=NF; i++) {
         gsub(/[^a-zA-Z0-9]/, "_", $i)  # Replace spaces and special characters with underscores
-        if ($i == "Entity" || $i == "Code" || $i == "Year" || $i == "Cantril_ladder_score" || $i == "_GDP_per_capita__PPP__constant_2017_international____") {
+        if ($i == "Entity" || $i == "Code" || $i == "Year" || $i == "Cantril_ladder_score" || $i == "_GDP_per_capita__PPP__constant_2017_international____" || $i == "Population__historical_estimates_") {
             column[i] = $i
             printf "%s\t", $i  # Print only the selected headers
         }
@@ -23,7 +23,7 @@ NR > 1 {
 awk -F '\t' 'NR==1 {
     for (i=1; i<=NF; i++) {
         gsub(/[^a-zA-Z0-9]/, "_", $i)  # Replace spaces and special characters with underscores
-        if ($i == "Entity" || $i == "Code" || $i == "Year" || $i == "Cantril_ladder_score" || $i == "Life_expectancy___Sex__all___Age__at_birth___Variant__estimates") {
+        if ($i == "Entity" || $i == "Code" || $i == "Year" || $i == "Cantril_ladder_score" || $i == "Life_expectancy___Sex__all___Age__at_birth___Variant__estimates" || $i == "Population__historical_estimates_") {
             column[i] = $i
             printf "%s\t", $i  # Print only the selected headers
         }
