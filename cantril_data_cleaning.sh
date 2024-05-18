@@ -1,8 +1,13 @@
 #/bin/bash
 
 # Returning the error if user provides more or less than 3 arguments.
-if [ "$#" -ne 3 ]; then
-  echo "Error: Please provide only <homicide-rate-unodc.tsv> <life-satisfaction-vs-life-expectancy.tsv> <gdp-vs-happiness.tsv> files." > /dev/stderr
+if [ "$#" -gt 3 ]; then
+  echo "Error:you have provided $# argument. 3 is needed. Please provide only <homicide-rate-unodc.tsv> <life-satisfaction-vs-life-expectancy.tsv> <gdp-vs-happiness.tsv> files." > /dev/stderr
+  exit 1
+fi
+
+if [ "$#" -lt 3 ]; then
+  echo "Error: you have provided $# argument. 3 is needed. Please provide <homicide-rate-unodc.tsv> <life-satisfaction-vs-life-expectancy.tsv> <gdp-vs-happiness.tsv> files." > /dev/stderr
   exit 1
 fi
 
