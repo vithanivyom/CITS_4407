@@ -6,6 +6,7 @@ if [ "$#" -ne 3 ]; then
   exit 1
 fi
 
+# Validate the file name and assigning to the variable.
 for file; do
   case "$file" in
     *"gdp-vs-happiness.tsv"*)
@@ -24,6 +25,7 @@ for file; do
   esac
 done
 
+# Merge 3 files and clean the data.
 awk -F'\t' -v OFS='\t' '
     BEGIN { 
         # Set field separators
