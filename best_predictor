@@ -1,0 +1,135 @@
+#/bin/bash
+
+# Validating the given file as parameter
+if [[ "$#" -gt 1 || "$#" -lt 1 ]]; then
+    echo "Error: You've passed $# files as arguments. only 1 file as argument is needed." >/dev/stderr
+    exit 1
+# validate if the argument is a TSV
+elif [[ ! "$1" =~ \.tsv$ ]]; then
+    echo "Error: Please provide a file with a .tsv extension." >/dev/stderr
+    exit 1
+elif [[ ! -f "$1" ]]; then
+    echo "Error: File does not exist." >/dev/stderr
+    exit 1
+else
+    # validate if the file has exactly 8 columns
+    num_columns=$(awk -F'\t' '{print NF; exit}' "$1")
+    if [[ "$num_columns" -ne 8 ]]; then
+        echo "Error: Please provide a valid TSV file with exactly 8 columns." >/dev/stderr
+        exit 1
+    fi
+fi
+
+file="${1:-output.tsv}"
+
+awk -F'\t' '
+function abs(x) { return x < 0 ? -x : x; }
+BEGIN {
+    # Define types of data and their corresponding column numbers
+    types["Homicide_Rate"] = 6;
+    types["GDP"] = 4;
+    types["Population"] = 5;
+    types["Life_Expectancy"] = 7;
+
+    # Define the order in which types will be processed
+    order_str = "Homicide_Rate GDP Population Life_Expectancy";
+    split(order_str, type_order, " ");
+    for (i = 1; i <= length(type_order); i++) {
+        order[i] = type_order[i];
+    }
+}
+
+# Validating the data that, is it null or not.
+{
+    country_name = $2;
+    valid_data = 1;
+    for (i = 4; i <= 8; i++) {
+        if ($i == "") {
+            valid_data = 0;
+            break;
+        }
+    }
+    if (valid_data) {
+        count[country_name]++;
+        temp[country_name][count[country_name]] = $4 " " $5 " " $6 " " $7 " " $8;
+    }
+}
+
+END {
+
+    # Loop through each country data
+    for (country in count) {
+
+        # Check if there are at least 3 entries for the country
+        if (count[country] >= 3) {
+
+            # Loop through each type of data
+            for (type_name in types) {
+
+                # Initialize variables for calculations
+                sum_x = sum_y = sum_xy = sum_x_squared = sum_y_squared = total = 0;
+
+                # Loop through each data entry for the country
+                for (entry = 1; entry <= count[country]; entry++) {
+
+                    # Split the data entry into individual values
+                    split(temp[country][entry], values, " ");
+
+                    # Extract x and y values for correlation calculation
+                    x_val = values[types[type_name] - 3];
+                    y_val = values[5];
+
+                    # Check if both x and y are valid
+                    if (x_val != "" && y_val != "") {
+
+                        # Update sums and counts for correlation
+                        sum_x += x_val;
+                        sum_y += y_val;
+                        sum_xy += x_val * y_val;
+                        sum_x_squared += x_val * x_val;
+                        sum_y_squared += y_val * y_val;
+                        total++;
+                    }
+                }
+
+                # Check if there are valid data points for correlation calculation
+                if (total > 0) {
+
+                    # Calculate correlation coefficient
+                    upper_part = total * sum_xy - sum_x * sum_y;
+                    lower_part = sqrt((total * sum_x_squared - sum_x^2) * (total * sum_y_squared - sum_y^2));
+
+                    # Check if denominator is not zero to avoid division by zero
+                    if (lower_part != 0) {
+                        correlation = upper_part / lower_part;
+                        corr_sum[type_name] += correlation;
+                        corr_count[type_name]++;
+                    }
+                }
+            }
+        }
+    }
+
+    # Calculate and print average correlation for each type of data
+    for (idx = 1; idx <= 4; idx++) {
+        type = order[idx];
+        if (corr_count[type] > 0) {
+            avg_corr = corr_sum[type] / corr_count[type];
+            printf "Mean correlation of %s with Cantril Ladder is %.3f\n", type, avg_corr;
+
+            # Update maximum correlation if current correlation is greater
+            if (abs(avg_corr) > abs(max_corr)) {
+                max_corr = avg_corr;
+                max_type = type;
+            }
+        } else {
+            # Print a message if there is not enough data for correlation calculation
+            print "Insufficient data for correlation calculation:", type;
+        }
+    }
+
+    # Print the type of data with the highest correlation with Cantril Ladder and its value
+    printf "Most predictive mean correlation with the Cantril ladder is %s (r = %.3f)\n", max_type, max_corr;
+}
+
+' "$file"
