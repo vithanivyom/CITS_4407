@@ -1,0 +1,55 @@
+#/bin/bash
+# Name: Vyom T Vithani
+#Student ID: 24391776
+#Subject: CITS4407
+
+# Returning the error if the user provides more or less than 3 arguments.
+if [ "$#" -ne 3 ]; then
+  echo "Error: You have provided $# argument. 3 are needed. Please provide three .tsv files." > /dev/stderr
+  exit 1
+fi
+
+# Validate the file names and assign them to variables.
+input_file1=""
+input_file2=""
+input_file3=""
+for file in "$@"; do
+  # Check column names and assign input files accordingly
+  column_names=$(head -n 1 "$file")
+  if [[ "$column_names" == *"Entity"* && "$column_names" == *"Code"* && "$column_names" == *"Year"* && "$column_names" == *"GDP per capita"* && "$column_names" == *"Population"* && "$column_names" == *"Cantril ladder score"* ]]; then
+    input_file1="$file"
+  elif [[ "$column_names" == *"Entity"* && "$column_names" == *"Code"* && "$column_names" == *"Year"* && "$column_names" == *"Homicide rate"* ]]; then
+    input_file2="$file"
+  else
+    if [ -z "$input_file3" ]; then
+      input_file3="$file"
+    fi
+  fi
+done
+
+# Merge 3 files and clean the data, and output to standard output.
+awk -F'\t' -v OFS='\t' '
+    BEGIN { 
+        # Set field separators
+        FS = OFS = "\t"
+    }
+    # Read the first file into array a
+    FNR == NR {
+        a[$1 FS $3] = $0
+        next
+    }
+    ($1 FS $3) in a {
+        print a[$1 FS $3], $0
+    }
+' "$input_file1" "$input_file2" | awk '
+    BEGIN {FS=OFS="\t"}
+    FNR==NR {b[$1 FS $3] = $0; next}
+    # For the second and third files, if key exists in array a, print combined lines
+    ($1 FS $3) in b {print $0, b[$1 FS $3]}
+' - "$input_file3" |
+awk -F'\t' -v OFS='\t' '
+    # Print header line and filter data based on conditions
+    NR == 1 || ($3 >= 2011 && $3 <= 2021 && $2 != "") {
+        print $1,$2,$3,$12,$6,$18,$4,$5
+    }
+'
