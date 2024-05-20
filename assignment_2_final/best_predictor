@@ -8,8 +8,14 @@
 if [[ "$#" -gt 1 || "$#" -lt 1 ]]; then
     echo "Error: You've passed $# files as arguments. only 1 file as argument is needed." >/dev/stderr
     exit 1
+fi
+
+file=$1
+# Extracting file extension
+file_extension="${file##*.}"
+
 # validate if the argument is a TSV
-elif [[ ! "$1" =~ \.tsv$ ]]; then
+if [[ "$file_extension" != "tsv" ]]; then
     echo "Error: Please provide a file with a .tsv extension." >/dev/stderr
     exit 1
 elif [[ ! -f "$1" ]]; then
@@ -22,6 +28,15 @@ else
         echo "Error: Please provide a valid TSV file with exactly 8 columns." >/dev/stderr
         exit 1
     fi
+
+    expected_keywords=("Entity" "Code" "Year" "GDP per capita" "Population" "Homicide Rate" "Life Expectancy" "Cantril Ladder score")
+    column_names=$(head -n 1 "$1" | tr '[:upper:]' '[:lower:]')
+    for keyword in "${expected_keywords[@]}"; do
+        if ! grep -qi "$keyword" <<< "$column_names"; then
+            echo "Error: The column names do not contain the keyword '$keyword'." >/dev/stderr
+            exit 1
+        fi
+    done
 fi
 
 file=$1
